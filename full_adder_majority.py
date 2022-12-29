@@ -1,6 +1,5 @@
 from gates import *
 import numpy as np
-from itertools import combinations
 import matplotlib.pyplot as plt
 from scipy.integrate import solve_ivp
 
@@ -13,7 +12,6 @@ def full_adder(T, state, *params):
     abc_maj = MAJ(a, b, c, par)
 
     abcnot_maj = MAJ(a, b, NOT(c, par), par)
-
 
     carry_out = abc_maj + degrade(carry, delta)
     s_out = MAJ(NOT(abc_maj, par), c, abcnot_maj, par) + degrade(s, delta)
