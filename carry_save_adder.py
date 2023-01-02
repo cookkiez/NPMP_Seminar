@@ -14,26 +14,35 @@ def chunks(lst, n):
         yield lst[i:i + n]
 
 
-
 def carry_save_adder(T, state, *params):
     alpha, Kd, n, delta = params
-    par = alpha, Kd, n, delta
-    x, y, z, c, s, prev_carry = chunks(state, n_bits)
-    carry_out = np.zeros(len(c))
+    x, y, z, s, c, prev_carry = chunks(state, n_bits)
+    carry_out = np.zeros(len(c) + len(prev_carry))
     sum_out = np.zeros(len(s))
     carry_out[0] = prev_carry
     for i in range(n_bits):
         state_i = [int(x[i]), int(y[i]), int(z[i]), 0, 0]
         sum_degrade = degrade(s[i], delta)
-        x[i], y[i], z[i], carry_i, sum_out[i] = full_adder(T, state_i, alpha, Kd, n, delta) 
+        x[i], y[i], z[i], carry_i, sum_out[i] = full_adder(
+            T, state_i, alpha, Kd, n, delta)
         sum_out[i] += sum_degrade
-        if i < n_bits - 1: 
-            carry_out[i + 1] = carry_i + degrade(c[i + 1], delta)
-        else:
-            prev_carry = carry_i + degrade(prev_carry, delta)
-        
-    to_return = np.concatenate((x, y, z, carry_out, sum_out, prev_carry))
+        carry_out[i] = carry_i + degrade(c[i], delta)
+
+    to_return = np.concatenate((x, y, z, sum_out, carry_out))
     return to_return
+
+
+def do_plots(ix, ax_ix, num_plots, legend_string, title_string):
+    while ix < num_plots:
+        bit_i = num_plots - ix - 1
+        ax = axs.flat[ax_ix]
+        ax.plot(T, z.T[:, ix:ix + 1])
+        ax.legend([legend_string(bit_i)])
+        ax.set_xlabel('Time')
+        ax.set_ylabel('Concentrations')
+        ax.set_title(title_string(bit_i))
+        ix += 1
+        ax_ix += 1
 
 
 if __name__ == "__main__":
@@ -43,19 +52,20 @@ if __name__ == "__main__":
     N = t_end * 10  # number of samples
     T = np.linspace(0, t_end, N)
 
-    # Inputs for full adder
+    # Inputs for Carry save adder
     inputs = [
-        (            
-            10, 10, 0, # A
-            0, 0, 10,  # B
-            10, 10, 0,   # C
-            0, 0, 0,   # Carry out
-            0, 0, 0,   # Sum out
-            0,         # Previous carry value
+        (
+            10, 10, 10,  # A
+            0, 0, 10,   # B
+            10, 10, 10,  # C
+            0, 0, 0,    # Sum out
+            0, 0, 0,    # Carry out
+            10,         # Previous carry value - AKA CO in paper. This carry extends
+                        # the result by one bit.
         )
-    ] 
+    ]
 
-    f, axs = plt.subplots(n_bits, 2, sharey=True)
+    f, axs = plt.subplots(n_bits + 1, 2, sharey=True)
     for ins in inputs:
         # set initial conditions
         Y0 = np.zeros(len(inputs[0]))
@@ -65,31 +75,22 @@ if __name__ == "__main__":
             Y0[ix] = i
 
         # solving the initial value problems with scipy
-        sol = solve_ivp(carry_save_adder, [0, t_end], Y0, args=params, dense_output=True)
+        sol = solve_ivp(carry_save_adder, [0, t_end], 
+                        Y0, args=params, dense_output=True)
         z = sol.sol(T)
 
-        sum_ix = 4 * n_bits
-        carry_ix = 3 * n_bits
-        num_plots = sum_ix + n_bits
-        while sum_ix < num_plots:
-            bit_i = num_plots - sum_ix - 1
-            ax = axs.flat[bit_i]
-            ax.plot(T, z.T[:, sum_ix:sum_ix + 1])
-            ax.legend([f"Sum bit {bit_i} concentration"])
-            ax.set_xlabel('Time') 
-            ax.set_ylabel('Concentrations')
-            ax.set_title(f"Sum bit index: {bit_i}")
+        sum_ix = 3 * n_bits
+        ax_ix = 0
+        do_plots(sum_ix, ax_ix, sum_ix + n_bits,
+                 lambda i: f"Sum bit {i} concentration",
+                 lambda i: f"Sum bit index {i}")
 
-            bit_i = num_plots - carry_ix - 1
-            ax = axs.flat[bit_i]
-            bit_i -= n_bits
-            ax.plot(T, z.T[:, carry_ix:carry_ix + 1])
-            ax.legend([f"Carry bit {bit_i} concentration"])
-            ax.set_xlabel('Time') 
-            ax.set_ylabel('Concentrations')
-            ax.set_title(f"Carry bit index: {bit_i}")
-            sum_ix += 1
-            carry_ix += 1
+        carry_ix = 4 * n_bits
+        num_plots = len(inputs[0])
+        ax_ix = n_bits
+        do_plots(carry_ix, ax_ix, num_plots,
+                 lambda i: f"Carry bit {i} concentration",
+                 lambda i: f"Carry bit index: {i}")
 
     f.set_size_inches(10, 10)
     f.tight_layout()
