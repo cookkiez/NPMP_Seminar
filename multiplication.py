@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from scipy.integrate import solve_ivp
 
 
-n_bits = 5
+n_bits = 6
 
 
 def chunks(lst, n):
@@ -69,7 +69,7 @@ if __name__ == "__main__":
     # pridobim seznam stevil, ki jih moram sesteti
     seznam = multiply([10,0,10], [0, 10, 0])
 
-    parameters = seznam[0] + seznam[1] + seznam[2] + [0] * n_bits + [0] * n_bits + [10]
+    parameters = [0] + seznam[0] + [0] + seznam[1] + [0] + seznam[2] + [0] * n_bits + [0] * n_bits + [0]
     # Inputs for Carry save adder
     inputs = [
         tuple(parameters)
