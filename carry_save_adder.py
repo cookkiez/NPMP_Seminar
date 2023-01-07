@@ -5,9 +5,6 @@ import matplotlib.pyplot as plt
 from scipy.integrate import solve_ivp
 
 
-n_bits = 3
-
-
 def chunks(lst, n):
     """Yield successive n-sized chunks from lst."""
     for i in range(0, len(lst), n):
@@ -15,7 +12,7 @@ def chunks(lst, n):
 
 
 def carry_save_adder(T, state, *params):
-    alpha, Kd, n, delta = params
+    alpha, Kd, n, delta, n_bits = params
     x, y, z, s, c, prev_carry = chunks(state, n_bits)
     carry_out = np.zeros(len(c) + len(prev_carry))
     sum_out = np.zeros(len(s))
@@ -46,7 +43,8 @@ def do_plots(ix, ax_ix, num_plots, legend_string, title_string):
 
 
 if __name__ == "__main__":
-    params = alpha, Kd, n, delta
+    n_bits = 3
+    params = alpha, Kd, n, delta, n_bits
     t_end = 100
     # set simulation parameters
     N = t_end * 10  # number of samples

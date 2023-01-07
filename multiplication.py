@@ -1,35 +1,8 @@
+from carry_save_adder import carry_save_adder
 from gates import *
-from full_adder import *
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.integrate import solve_ivp
-
-
-n_bits = 6
-
-
-def chunks(lst, n):
-    """Yield successive n-sized chunks from lst."""
-    for i in range(0, len(lst), n):
-        yield lst[i:i + n]
-
-
-def carry_save_adder(T, state, *params):
-    alpha, Kd, n, delta = params
-    x, y, z, s, c, prev_carry = chunks(state, n_bits)
-    carry_out = np.zeros(len(c) + len(prev_carry))
-    sum_out = np.zeros(len(s))
-    carry_out[0] = prev_carry
-    for i in range(n_bits):
-        state_i = [int(x[i]), int(y[i]), int(z[i]), 0, 0]
-        sum_degrade = degrade(s[i], delta)
-        x[i], y[i], z[i], carry_i, sum_out[i] = full_adder(
-            T, state_i, alpha, Kd, n, delta)
-        sum_out[i] += sum_degrade
-        carry_out[i] = carry_i + degrade(c[i], delta)
-
-    to_return = np.concatenate((x, y, z, sum_out, carry_out))
-    return to_return
 
 
 def do_plots(ix, ax_ix, num_plots, legend_string, title_string):
@@ -44,9 +17,9 @@ def do_plots(ix, ax_ix, num_plots, legend_string, title_string):
         ix += 1
         ax_ix += 1
 
+# return list of all numbers that needs to be added to calculate multiplication
 def multiply(x, y):
-    # sestavi vse vrstice, ki jih bo potrebno sesteti
-    max_len = len(x) + len(y) - 1
+    max_len = len(x) + len(y)
     seznam = []
     odmik = 0
     while len(y) > 0:
@@ -59,17 +32,21 @@ def multiply(x, y):
         odmik += 1
     return seznam
 
+
 if __name__ == "__main__":
-    params = alpha, Kd, n, delta
+    number1 = [10, 0, 10]
+    number2 = [0, 10, 0]
+
+    n_bits = len(number1) + len(number2)
+    params = alpha, Kd, n, delta, n_bits
     t_end = 100
     # set simulation parameters
     N = t_end * 10  # number of samples
     T = np.linspace(0, t_end, N)
 
-    # pridobim seznam stevil, ki jih moram sesteti
-    seznam = multiply([10,0,10], [0, 10, 0])
+    seznam = multiply(number1, number2)
 
-    parameters = [0] + seznam[0] + [0] + seznam[1] + [0] + seznam[2] + [0] * n_bits + [0] * n_bits + [0]
+    parameters = seznam[0] + seznam[1] + seznam[2] + [0] * n_bits + [0] * n_bits + [0]
     # Inputs for Carry save adder
     inputs = [
         tuple(parameters)
@@ -106,11 +83,3 @@ if __name__ == "__main__":
     f.tight_layout()
     plt.tight_layout()
     plt.show()
-
-
-
-
-
-#print(multiply([10,0,10], [0, 10, 0]))
-
-
