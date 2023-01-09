@@ -1,3 +1,4 @@
+from carry_save_adder import carry_save_adder
 from gates import *
 import numpy as np
 import matplotlib.pyplot as plt
@@ -13,8 +14,8 @@ def binatodeci(binary):
     return sum(val*(2**idx) for idx, val in enumerate(reversed(bin)))
 
 
+# return list of all numbers that needs to be added to calculate multiplication
 def multiply(x, y):
-    # sestavi vse vrstice, ki jih bo potrebno sesteti
     max_len = len(x) + len(y)
     seznam = []
     odmik = 0
@@ -27,19 +28,6 @@ def multiply(x, y):
         seznam.append(vrstica)
         odmik += 1
     return seznam
-
-
-def do_plots(ix, ax_ix, num_plots, legend_string, title_string):
-    while ix < num_plots:
-        bit_i = num_plots - ix - 1
-        ax = axs.flat[ax_ix]
-        ax.plot(T, z.T[:, ix:ix + 1])
-        ax.legend([legend_string(bit_i)])
-        ax.set_xlabel('Time')
-        ax.set_ylabel('Concentrations')
-        ax.set_title(title_string(bit_i))
-        ix += 1
-        ax_ix += 1
 
 
 def append_to_list(app_list, start_ix, end_ix, z, temp_list):
